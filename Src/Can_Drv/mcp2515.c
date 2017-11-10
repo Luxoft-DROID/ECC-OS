@@ -78,13 +78,10 @@ void can_w_txbuf(uint8_t bufid, void *buf, uint8_t len)
 {
 	uint16_t i;
 	uint8_t *sbuf = (uint8_t *)buf;
-
-	CAN_CS_LOW;
 	spi_transfer(MCP2515_SPI_LOAD_TXBUF | (bufid & 0x07));
 	for (i=0; i < len; i++) {
 		spi_transfer(sbuf[i]);
 	}
-	CAN_CS_HIGH;
 }
 
 void can_r_rxbuf(uint8_t bufid, void *buf, uint8_t len)
@@ -278,11 +275,12 @@ int can_send(uint32_t msg, uint8_t is_ext, void *buf, uint8_t len, uint8_t prio)
 	// Load buffer & send
 	outbuf[4] = len;
 	memcpy(outbuf+5, (uint8_t *)buf, len);
-
+        
 	can_w_reg(MCP2515_TXB0CTRL + 0x10*txb, &prio, 1);
 	can_w_txbuf(MCP2515_TXBUF_TXB0SIDH + 2*txb, outbuf, 5+len);
-	can_w_bit(MCP2515_CANINTE, MCP2515_CANINTE_TX0IE << txb, MCP2515_CANINTE_TX0IE << txb);
-	//can_w_bit(MCP2515_TXB0CTRL + 0x10*txb, MCP2515_TXBCTRL_TXREQ, MCP2515_TXBCTRL_TXREQ);
+        can_w_bit(MCP2515_CANINTE, MCP2515_CANINTE_TX0IE << txb, MCP2515_CANINTE_TX0IE << txb);
+
+        //can_w_bit(MCP2515_TXB0CTRL + 0x10*txb, MCP2515_TXBCTRL_TXREQ, MCP2515_TXBCTRL_TXREQ);
 	spi_transfer(MCP2515_SPI_RTS | mcp2515_txb);  // Initiate transmission
         CAN_CS_HIGH;
 

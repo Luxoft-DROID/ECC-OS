@@ -53,6 +53,7 @@ uint8_t spi_transfer(uint8_t inb)
 	uint8_t tmp = 0x00;
         uint8_t tmp1 = 0x00;
         tmp = SPI1->DR; //dummy read!
+        while (!SPI_GET_FLAG(SPI_SR_TXE)); // Wait until TX buffer is empty
 	SPI1->DR = inb; // Send byte to SPI (TXE cleared)
 	tmp1 = (uint8_t)SPI1->SR;
         while (tmp1 & 0x80)
@@ -60,9 +61,7 @@ uint8_t spi_transfer(uint8_t inb)
          tmp1 = (uint8_t)SPI1->SR;
         } // Wait until the transmission is complete
 	tmp = SPI1->DR;
-        while (!SPI_GET_FLAG(SPI_SR_TXE)); // Wait until TX buffer is empty
         while (SPI_GET_FLAG(SPI_SR_BSY));
-        osDelay(1);
 	return tmp;
 }
 

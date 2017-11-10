@@ -510,7 +510,7 @@ void CanTaskFunc(void const * argument)
   for(;;)
   {
    // uint16_t cmd = 0xBB;
-    uint32_t msg = 125;
+    uint32_t msg = 456;
     uint8_t buf[8] = {'V', 'I', 'C', 'T', 'O', 'R', 'G', 'Y'};
     ttt = can_send(msg, 0, buf, 8, 3);
     //ttt = can_send(msg, 0, buf, 8, 3);
