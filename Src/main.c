@@ -504,18 +504,31 @@ int ttt=0;
 void CanTaskFunc(void const * argument)
 {
   /* USER CODE BEGIN CanTaskFunc */
-  spi_init();
   can_init();
   /* Infinite loop */
   for(;;)
   {
-   // uint16_t cmd = 0xBB;
-    uint32_t msg = 456;
-    uint8_t buf[8] = {'V', 'I', 'C', 'T', 'O', 'R', 'G', 'Y'};
-    ttt = can_send(msg, 0, buf, 8, 3);
-    //ttt = can_send(msg, 0, buf, 8, 3);
-    //can_spi_command(cmd);
-    osDelay(500);
+      uint32_t msg = 0x04560456;
+      uint32_t msg2;
+      uint8_t buf_tx[8] = {'V', 'I', 'C', 'T', 'O', 'R', 'G', 'Y'};
+      uint8_t buf_rx[8];
+      uint8_t is_ext;
+
+      if (can_recv(&msg2, &is_ext, &buf_rx) > -1) {
+
+        if (msg2 == 0x0456)
+        {
+          ttt = can_send(msg, 0, buf_tx, 8, 3);
+          if (!strncmp((char *)buf_rx, "LIGHTLED", sizeof(buf_rx)))
+              GPIOF->ODR &= ~(1 << 10);
+          else if (!strncmp((char *)buf_rx, "LEDOFF", sizeof(buf_rx)))
+              GPIOF->ODR |= (1 << 10);
+        }
+        msg2 = 0;
+        memset(buf_rx, 0, sizeof(buf_rx));
+        is_ext = 0;
+      }
+      osDelay(500);
   }
   /* USER CODE END CanTaskFunc */
 }

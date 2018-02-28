@@ -41,13 +41,13 @@ void can_r_reg(uint8_t addr, void *buf, uint8_t len)
 	uint16_t i;
 	uint8_t *sbuf = (uint8_t *)buf;
 
-	//CAN_CS_LOW;
+	CAN_CS_LOW;
 	spi_transfer(MCP2515_SPI_READ);
 	spi_transfer(addr);
 	for (i=0; i < len; i++) {
 		sbuf[i] = spi_transfer(0xFF);
 	}
-	//CAN_CS_HIGH;
+	CAN_CS_HIGH;
 }
 
 void can_w_reg(uint8_t addr, void *buf, uint8_t len)
@@ -55,33 +55,35 @@ void can_w_reg(uint8_t addr, void *buf, uint8_t len)
 	uint16_t i;
 	uint8_t *sbuf = (uint8_t *)buf;
 
-	//CAN_CS_LOW;
+	CAN_CS_LOW;
 	spi_transfer(MCP2515_SPI_WRITE);
 	spi_transfer(addr);
 	for (i=0; i < len; i++) {
 		spi_transfer(sbuf[i]);
 	}
-	//CAN_CS_HIGH;
+	CAN_CS_HIGH;
 }
 
 void can_w_bit(uint8_t addr, uint8_t mask, uint8_t val)
 {
-	//CAN_CS_LOW;
+	CAN_CS_LOW;
 	spi_transfer(MCP2515_SPI_BITMOD);
 	spi_transfer(addr);
 	spi_transfer(mask);
 	spi_transfer(val);
-	//CAN_CS_HIGH;
+	CAN_CS_HIGH;
 }
 
 void can_w_txbuf(uint8_t bufid, void *buf, uint8_t len)
 {
 	uint16_t i;
 	uint8_t *sbuf = (uint8_t *)buf;
+        CAN_CS_LOW;
 	spi_transfer(MCP2515_SPI_LOAD_TXBUF | (bufid & 0x07));
 	for (i=0; i < len; i++) {
 		spi_transfer(sbuf[i]);
 	}
+        CAN_CS_HIGH;
 }
 
 void can_r_rxbuf(uint8_t bufid, void *buf, uint8_t len)
@@ -111,17 +113,68 @@ void can_init()
 	spi_init();
 	
 	can_spi_command(MCP2515_SPI_RESET);
-	osDelay(10);
+	osDelay(5);
 
-	mcp2515_ctrl = MCP2515_CANCTRL_REQOP_CONFIGURATION;
-	can_w_reg(MCP2515_CANCTRL, &mcp2515_ctrl, 1);
+        uint8_t rx_buffer[10];
+        //0x03 0x0E 0xXX
+        can_r_reg(MCP2515_CANSTAT, &rx_buffer[0], 1);
+        //0x02 0x2A 0x01
+        //Baud rate prescaler configure
+        ie =  MCP2515_CNF1_BRP0;
+        can_w_reg(MCP2515_CNF1, &ie, 1); 
+        //osDelay(1);
+        //0x02 0x29 0xBF
+        ie = (MCP2515_CNF2_PRSEG0 
+             | MCP2515_CNF2_PRSEG1 
+             | MCP2515_CNF2_PRSEG2
+             | MCP2515_CNF2_PHSEG10
+             | MCP2515_CNF2_PHSEG11
+             | MCP2515_CNF2_PHSEG12
+             | MCP2515_CNF2_BTLMODE);
+        can_w_reg(MCP2515_CNF2, &ie, 1);
 
-	ie = MCP2515_CANINTE_RX0IE | MCP2515_CANINTE_RX1IE | MCP2515_CANINTE_ERRIE | MCP2515_CANINTE_MERRE;
-	can_w_reg(MCP2515_CANINTE, &ie, 1);
+        //0x05 28 07 02
+        ie = MCP2515_CNF3_PHSEG_MASK;
+        can_w_bit(MCP2515_CNF3, ie, 0x02);
 
-	mcp2515_irq = 0x00;
-	mcp2515_txb = 0x00;
-	mcp2515_exmask = 0x00;
+        //0x02 0x60 0x64
+        //receive both extended and standard frame on rx0
+        ie = (MCP2515_RXB0CTRL_MODE_RECV_ALL
+             | MCP2515_RXB0CTRL_BUKT);
+        can_w_reg(MCP2515_RXB0CTRL, &ie, 1);
+
+        //0x02 0x70 0x60
+        //receive both extended and standard frames on rx1
+        ie = MCP2515_RXB1CTRL_MODE_RECV_ALL;
+        can_w_reg(MCP2515_RXB1CTRL, &ie, 1);
+
+        //0x02 0x2B 0x3F
+        //interupt on rx0, rx1, tx0, tx1, tx2 and err
+        ie = (MCP2515_CANINTE_RX0IE 
+              | MCP2515_CANINTE_RX1IE
+              | MCP2515_CANINTE_TX0IE
+              | MCP2515_CANINTE_TX1IE
+              | MCP2515_CANINTE_TX2IE
+              | MCP2515_CANINTE_ERRIE);
+        can_w_reg(MCP2515_CANINTE, &ie, 1);
+
+        //0x02 0x0F 0x00
+        ie = MCP2515_CANCTRL_REQOP_NORMAL;
+        can_w_reg(MCP2515_CANCTRL, &ie, 1);
+        osDelay(1);
+        can_r_reg(MCP2515_CANSTAT, &rx_buffer[1], 1);
+
+        
+        
+	//mcp2515_ctrl = MCP2515_CANCTRL_REQOP_CONFIGURATION;
+	//can_w_reg(MCP2515_CANCTRL, &mcp2515_ctrl, 1);
+        //
+	//ie = MCP2515_CANINTE_RX0IE | MCP2515_CANINTE_RX1IE | MCP2515_CANINTE_ERRIE | MCP2515_CANINTE_MERRE;
+	//can_w_reg(MCP2515_CANINTE, &ie, 1);
+        //
+	//mcp2515_irq = 0x00;
+	//mcp2515_txb = 0x00;
+	//mcp2515_exmask = 0x00;
 
 	//_EINT();
 }
@@ -216,7 +269,9 @@ void can_compose_msgid_std(uint32_t id, uint8_t *bytebuf)
 {
 	bytebuf[0] = (uint8_t) ((id & 0x000007F8UL) >> 3);
 	bytebuf[1] = (uint8_t) ((id & 0x00000007UL) << 5);
-	bytebuf[2] = (uint8_t) ((id & 0xFF000000UL) >> 24);  // Upper 16 bits assumed to be potential byte-filter information
+	//bytebuf[2] = (uint8_t) ((id & 0x0000FF00UL) >> 8);
+	//bytebuf[3] = (uint8_t) (id & 0x000000FFUL);
+        bytebuf[2] = (uint8_t) ((id & 0xFF000000UL) >> 24);  // Upper 16 bits assumed to be potential byte-filter information
 	bytebuf[3] = (uint8_t) ((id & 0x00FF0000UL) >> 16);  // for mask & filters to filter on the first 16 bits of the frame data.
 }
 
@@ -257,8 +312,7 @@ int can_send(uint32_t msg, uint8_t is_ext, void *buf, uint8_t len, uint8_t prio)
 	if ( (txb = can_tx_available()) < 0 )
 		return -1;
 	mcp2515_txb |= 1 << txb;
-        
-        CAN_CS_LOW;
+
 	// Make sure we're in the right operational mode
 	if ( (mcp2515_ctrl & MCP2515_CANCTRL_REQOP_MASK) != MCP2515_CANCTRL_REQOP_NORMAL &&
 		 (mcp2515_ctrl & MCP2515_CANCTRL_REQOP_MASK) != MCP2515_CANCTRL_REQOP_LOOPBACK ) {
@@ -275,14 +329,12 @@ int can_send(uint32_t msg, uint8_t is_ext, void *buf, uint8_t len, uint8_t prio)
 	// Load buffer & send
 	outbuf[4] = len;
 	memcpy(outbuf+5, (uint8_t *)buf, len);
-        
+
 	can_w_reg(MCP2515_TXB0CTRL + 0x10*txb, &prio, 1);
 	can_w_txbuf(MCP2515_TXBUF_TXB0SIDH + 2*txb, outbuf, 5+len);
-        can_w_bit(MCP2515_CANINTE, MCP2515_CANINTE_TX0IE << txb, MCP2515_CANINTE_TX0IE << txb);
-
-        //can_w_bit(MCP2515_TXB0CTRL + 0x10*txb, MCP2515_TXBCTRL_TXREQ, MCP2515_TXBCTRL_TXREQ);
-	spi_transfer(MCP2515_SPI_RTS | mcp2515_txb);  // Initiate transmission
-        CAN_CS_HIGH;
+	can_w_bit(MCP2515_CANINTE, MCP2515_CANINTE_TX0IE << txb, MCP2515_CANINTE_TX0IE << txb);
+	//can_w_bit(MCP2515_TXB0CTRL + 0x10*txb, MCP2515_TXBCTRL_TXREQ, MCP2515_TXBCTRL_TXREQ);
+	can_spi_command(MCP2515_SPI_RTS | mcp2515_txb);  // Initiate transmission
 
 	return txb;
 }
@@ -629,11 +681,12 @@ int can_read_error(uint8_t reg)
 int can_irq_handler()
 {
 	int i;
-	uint8_t ifg, eflg, ie, txbctrl;
+	uint8_t ifg, eflg, ie, txbctrl, test;
 
 	mcp2515_irq &= MCP2515_IRQ_FLAGGED;  // Clear everything but the flagged bit.
 	// Read CANINTF to get started
 	can_r_reg(MCP2515_CANINTF, &ifg, 1);
+        can_r_reg(MCP2515_CANINTE, &test, 1);
 
 	// RX success IRQ?
 	if (ifg & (MCP2515_CANINTF_RX0IF | MCP2515_CANINTF_RX1IF)) {

@@ -160,12 +160,17 @@ void SysTick_Handler(void)
 /**
 * @brief This function handles EXTI line[9:5] interrupts.
 */
+  //uint32_t msg2_2;
+  //uint8_t buf_rx_2[8];
+  //uint8_t is_ext_2;
+
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+  
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */

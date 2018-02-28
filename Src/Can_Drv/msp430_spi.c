@@ -52,6 +52,9 @@ uint8_t spi_transfer(uint8_t inb)
 {
 	uint8_t tmp = 0x00;
         uint8_t tmp1 = 0x00;
+        
+        volatile char tmp_1 = 0, tmp_2 = 0, tmp_3 = 0;
+        
         tmp = SPI1->DR; //dummy read!
         while (!SPI_GET_FLAG(SPI_SR_TXE)); // Wait until TX buffer is empty
 	SPI1->DR = inb; // Send byte to SPI (TXE cleared)
@@ -60,8 +63,18 @@ uint8_t spi_transfer(uint8_t inb)
         {
          tmp1 = (uint8_t)SPI1->SR;
         } // Wait until the transmission is complete
-	tmp = SPI1->DR;
+	//tmp = SPI1->DR;
         while (SPI_GET_FLAG(SPI_SR_BSY));
+        
+        for(tmp_1 = 0; tmp_1 < 0x03; tmp_1++)
+        {
+          for(tmp_2 = 0; tmp_2 < 0x03; tmp_2++)
+          {
+           tmp_3++;
+          }
+          tmp_3--;
+        }
+        tmp = SPI1->DR;
 	return tmp;
 }
 
