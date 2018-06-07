@@ -29,5 +29,6 @@ typedef struct
 extern void MOT_Init(void);
 extern char MOT_Refresh(uint8_t *in);
 extern void MOT_Pulse_Gen(void);
+void MOT_Forward(void);
 
 #endif /* __Stepper_header */

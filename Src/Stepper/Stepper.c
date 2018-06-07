@@ -68,6 +68,10 @@ void MOT_Set_Direction(char MOT_Num, char MOT_DIR_Stat)
   }
 }
 
+/* M0,1,0,221 -> Motor 0, Enabled,  CW, 221 steps */ 
+/* M0,1,1,200 -> Motor 0, Enabled, CCW, 200 steps */ 
+/* M0,0,X,XXX -> Motor 0, Disabled */ 
+
 char MOT_Refresh(uint8_t *in)
 {  
   char mot_numb = 0;
@@ -87,10 +91,33 @@ char MOT_Refresh(uint8_t *in)
   else
     {
       MOT_Set_Direction(mot_numb, mot_direct);
-      ECC_Mot[mot_numb].MOT_STEP_Count = (((in[7] - '0') * 100) + ((in[8] - '0') * 10) + (in[9] - '0')); 
+      ECC_Mot[mot_numb].MOT_STEP_Count = (((in[7] - '0') * 100) + ((in[8] - '0') * 10) + (in[9] - '0'));
+      
+      if(255 < (ECC_Mot[mot_numb].MOT_STEP_Count))
+        {
+          ECC_Mot[mot_numb].MOT_STEP_Count = 0; /* Invalid step count was received */
+        } 
     }
   
   return (1);
+}
+
+void MOT_Forward(void)
+{
+  MOT_Set_Enable(0, 1);
+  MOT_Set_Enable(1, 1);
+  MOT_Set_Enable(2, 1);
+  MOT_Set_Enable(3, 1);
+  
+  MOT_Set_Direction(0, 1);
+  MOT_Set_Direction(1, 0);
+  MOT_Set_Direction(2, 1);
+  MOT_Set_Direction(3, 0);
+  
+  ECC_Mot[0].MOT_STEP_Count = 250;
+  ECC_Mot[1].MOT_STEP_Count = 250;
+  ECC_Mot[2].MOT_STEP_Count = 250;
+  ECC_Mot[3].MOT_STEP_Count = 250;
 }
 
 void MOT_Pulse_Gen(void)
