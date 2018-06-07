@@ -114,10 +114,64 @@ void MOT_Forward(void)
   MOT_Set_Direction(2, 1);
   MOT_Set_Direction(3, 0);
   
-  ECC_Mot[0].MOT_STEP_Count = 250;
-  ECC_Mot[1].MOT_STEP_Count = 250;
-  ECC_Mot[2].MOT_STEP_Count = 250;
-  ECC_Mot[3].MOT_STEP_Count = 250;
+  ECC_Mot[0].MOT_STEP_Count = 100;
+  ECC_Mot[1].MOT_STEP_Count = 100;
+  ECC_Mot[2].MOT_STEP_Count = 100;
+  ECC_Mot[3].MOT_STEP_Count = 100;
+}
+
+void MOT_back()
+{
+  MOT_Set_Enable(0, 1);
+  MOT_Set_Enable(1, 1);
+  MOT_Set_Enable(2, 1);
+  MOT_Set_Enable(3, 1);
+  
+  MOT_Set_Direction(0, 0);
+  MOT_Set_Direction(1, 1);
+  MOT_Set_Direction(2, 0);
+  MOT_Set_Direction(3, 1);
+  
+  ECC_Mot[0].MOT_STEP_Count = 100;
+  ECC_Mot[1].MOT_STEP_Count = 100;
+  ECC_Mot[2].MOT_STEP_Count = 100;
+  ECC_Mot[3].MOT_STEP_Count = 100;
+}
+
+void MOT_left()
+{
+  MOT_Set_Enable(0, 1);
+  MOT_Set_Enable(1, 1);
+  MOT_Set_Enable(2, 1);
+  MOT_Set_Enable(3, 1);
+  
+  MOT_Set_Direction(0, 0);
+  MOT_Set_Direction(1, 0);
+  MOT_Set_Direction(2, 1);
+  MOT_Set_Direction(3, 1);
+  
+  ECC_Mot[0].MOT_STEP_Count = 150;
+  ECC_Mot[1].MOT_STEP_Count = 150;
+  ECC_Mot[2].MOT_STEP_Count = 150;
+  ECC_Mot[3].MOT_STEP_Count = 150;
+}
+
+void MOT_right()
+{
+  MOT_Set_Enable(0, 1);
+  MOT_Set_Enable(1, 1);
+  MOT_Set_Enable(2, 1);
+  MOT_Set_Enable(3, 1);
+  
+  MOT_Set_Direction(0, 1);
+  MOT_Set_Direction(1, 1);
+  MOT_Set_Direction(2, 0);
+  MOT_Set_Direction(3, 0);
+  
+  ECC_Mot[0].MOT_STEP_Count = 150;
+  ECC_Mot[1].MOT_STEP_Count = 150;
+  ECC_Mot[2].MOT_STEP_Count = 150;
+  ECC_Mot[3].MOT_STEP_Count = 150;
 }
 
 void MOT_Pulse_Gen(void)

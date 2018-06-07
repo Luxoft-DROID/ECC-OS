@@ -498,7 +498,7 @@ void MOT_Func(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(2);
     MOT_Pulse_Gen();
   }
   /* USER CODE END MOT_Func */
@@ -520,13 +520,27 @@ void CanTaskFunc(void const * argument)
 
       if (can_recv(&msg2, &is_ext, &buf_rx) > -1) {
 
-        if (msg2 == 0x0456)
+        if (msg2 == 837)
         {
           ttt = can_send(msg, 0, buf_tx, 8, 3);
-          if (!strncmp((char *)buf_rx, "LIGHTLED", sizeof(buf_rx)))
-              GPIOF->ODR &= ~(1 << 10);
-          else if (!strncmp((char *)buf_rx, "LEDOFF", sizeof(buf_rx)))
-              GPIOF->ODR |= (1 << 10);
+          if (!strncmp((char *)buf_rx, "up", sizeof(buf_rx)))
+          {  
+            MOT_back();
+            GPIOF->ODR &= ~(1 << 10);
+          }
+          else if (!strncmp((char *)buf_rx, "d", sizeof(buf_rx)))
+          {
+            GPIOF->ODR |= (1 << 10);
+            MOT_Forward();
+          }          
+           if (!strncmp((char *)buf_rx, "l", sizeof(buf_rx)))
+          {  
+            MOT_left();        
+          }
+          else if (!strncmp((char *)buf_rx, "r", sizeof(buf_rx)))
+          {    
+            MOT_right();
+          }
         }
         msg2 = 0;
         memset(buf_rx, 0, sizeof(buf_rx));

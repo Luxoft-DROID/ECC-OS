@@ -30,5 +30,8 @@ extern void MOT_Init(void);
 extern char MOT_Refresh(uint8_t *in);
 extern void MOT_Pulse_Gen(void);
 void MOT_Forward(void);
+void MOT_back(void);
+void MOT_right(void);
+void MOT_left(void);
 
 #endif /* __Stepper_header */
