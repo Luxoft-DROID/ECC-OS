@@ -481,6 +481,10 @@ void Usart_Func(void const * argument)
             ADC_Refresh();
             GPIOF->ODR |= 0x00000400;
           }
+         else if('F' == RX_Buffer[0])
+          {
+            MOT_Forward();
+          }
       } 
     Returned_Stat = RX_Task();
   }
