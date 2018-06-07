@@ -13,7 +13,7 @@ HAL_StatusTypeDef RX_Task(void)
   
   if(HAL_TIMEOUT == Returned_Stat)
     {
-      if(RX_BUF_SIZE == RX_counter)
+      if((RX_BUF_SIZE == RX_counter) || (RX_BUF_SIZE_BT_PATCH == RX_counter))
         {
           Returned_Stat = HAL_OK;
         }
@@ -25,7 +25,7 @@ HAL_StatusTypeDef RX_Task(void)
     }
     else
     {
-      if( RX_BUF_SIZE > RX_counter)
+      if( RX_BUF_SIZE_BT_PATCH > RX_counter) /* ( RX_BUF_SIZE > RX_counter) */
         {
           RX_counter++;
           Returned_Stat = HAL_TIMEOUT;
